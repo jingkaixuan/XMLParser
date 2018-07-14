@@ -1,8 +1,7 @@
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Device implements Serializable {
+public class Device {
 	private String deviceID = null;
 	private String name = null;
 	private String civilCode = null;
@@ -11,7 +10,13 @@ public class Device implements Serializable {
 	private double latitude = 0.0;
 	private DeviceStatus status = null;
 	
-	private List<Device> deviceList = new ArrayList<Device>();
+	private List<Device> subDevices = new ArrayList<Device>();
+	
+	public void addToSubDevices(Device device) {
+		if(device != null) {
+			this.subDevices.add(device);
+		}
+	}
 
 	public String getDeviceID() {
 		return deviceID;
@@ -67,6 +72,14 @@ public class Device implements Serializable {
 
 	public void setStatus(DeviceStatus status) {
 		this.status = status;
+	}
+
+	public List<Device> getDeviceList() {
+		return subDevices;
+	}
+
+	public void setDeviceList(List<Device> deviceList) {
+		this.subDevices = deviceList;
 	}
 
 }

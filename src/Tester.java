@@ -17,11 +17,14 @@ import org.xml.sax.InputSource;
 
 public class Tester {
 	public static void main(String[] args) {
-		List<Device> cameraList = Tester.parseFromFile("data.xml");
-		System.out.println(cameraList.size());
+		Notify notify = Tester.parseFromFile("data.xml");
+		if (notify == null) {
+			return;
+		}
+		System.out.println(notify);
 	}
 
-	public static List<Device> parseFromFile(String xmlFile) {
+	public static Notify parseFromFile(String xmlFile) {
 		File file = new File(xmlFile);
 		BufferedReader br = null;
 
@@ -54,12 +57,12 @@ public class Tester {
 		return null;
 	}
 
-	/** 解析本地xml(响应) 文件 格式 见定义 */
-	public static List<Device> domXml(String xmlContent) {
-		List<Device> cameras = new ArrayList<Device>();
+	public static Notify domXml(String xmlContent) {
+		Notify notify = null;
 		Element element = null;
 		DocumentBuilder db = null;
 		DocumentBuilderFactory dbf = null;
+
 		try {
 			dbf = DocumentBuilderFactory.newInstance();
 			db = dbf.newDocumentBuilder();
@@ -69,65 +72,126 @@ public class Tester {
 			Document dt = db.parse(is);
 
 			element = dt.getDocumentElement();
-			System.out.println("根元素：" + element.getNodeName());
 			String rootName = element.getNodeName();
 			if (!rootName.equalsIgnoreCase("Notify")) {
+				if (sr != null) {
+					sr.close();
+				}
 				return null;
 			}
 
 			NodeList childNodes = element.getChildNodes();
-			for (int i = 0; i < childNodes.getLength(); i++)
-			{
+			for (int i = 0; i < childNodes.getLength(); i++) {
 				Node node1 = childNodes.item(i);
-				if ("CmdType".equalsIgnoreCase(node1.getNodeName())) {
-					System.out.println("CmdType = " + node1.getTextContent());
+				switch (node1.getNodeName()) {
+				case "CmdType":
 					String content = node1.getTextContent();
 					if (!content.equalsIgnoreCase("catalog")) {
 						return null;
 					}
-				} else if ("SN".equalsIgnoreCase(node1.getNodeName())) {
-					System.out.println("SN = " + node1.getTextContent());
-				} else if ("DeviceID".equalsIgnoreCase(node1.getNodeName())) {
-					System.out.println("Device ID = " + node1.getTextContent());
-				} else if ("SumNum".equalsIgnoreCase(node1.getNodeName())) {
-					System.out.println("SumNum = " + node1.getTextContent());
-				} else if ("DeviceList".equalsIgnoreCase(node1.getNodeName())) {
-					System.out.println("Device Count = " + node1.getAttributes().getNamedItem("Num").getNodeValue());
+					if (notify == null) {
+						notify = new Notify();
+					}
+					notify.setCmdType(node1.getTextContent());
+					break;
+				case "SN":
+					if (notify == null) {
+						notify = new Notify();
+					}
+					notify.setSerialNum(node1.getTextContent());
+					break;
+				case "DeviceID":
+					if (notify == null) {
+						notify = new Notify();
+					}
+					notify.setDeviceID(node1.getTextContent());
+					break;
+				case "SumNum":
+					if (notify == null) {
+						notify = new Notify();
+					}
+					// TODO check: sumNum is number?
+					notify.setSumNum(Integer.parseInt(node1.getTextContent()));
+					break;
+				case "DeviceList":
 					NodeList nodeDetail = node1.getChildNodes();
-					System.out.println("Item count = " + nodeDetail.getLength());
 					for (int j = 0; j < nodeDetail.getLength(); j++) {
 						Node detail = nodeDetail.item(j);
-						System.out.println(detail.getNodeName());
 						if ("Item".equals(detail.getNodeName())) {
+							Item item = new Item();
+							Device deviceInfo = null;
 							NodeList nodeDetail2 = detail.getChildNodes();
 							for (int k = 0; k < nodeDetail2.getLength(); k++) {
 								Node detail2 = nodeDetail2.item(k);
-								if ("Event".equals(detail2.getNodeName())) {
-									System.out.println("Event: " + detail2.getTextContent());
-								} else if ("Name".equals(detail2.getNodeName())) {
-									System.out.println("Name: " + detail2.getTextContent());
-								} else if ("CivilCode".equals(detail2.getNodeName())) {
-									System.out.println("CivilCode: " + detail2.getTextContent());
-								} else if ("ParentID".equals(detail2.getNodeName())) {
-									System.out.println("Parent ID: " + detail2.getTextContent());
-								} else if ("Longitude".equals(detail2.getNodeName())) {
-									System.out.println("Longitude: " + detail2.getTextContent());
-								} else if ("Latitude".equals(detail2.getNodeName())) {
-									System.out.println("Latitude: " + detail2.getTextContent());
-								} else if ("Status".equals(detail2.getNodeName())) {
-									System.out.println("Status: " + detail2.getTextContent());
-								} else if ("DeviceID".equals(detail2.getNodeName())) {
-									System.out.println("Status: " + detail2.getTextContent());
+								switch (detail2.getNodeName()) {
+								case "DeviceID":
+									item.setDeviceID(detail2.getTextContent());
+									break;
+								case "Event":
+									item.setEvent(detail2.getTextContent());
+									break;
+								case "Name":
+									// TODO design pattern for the similar code below:
+									if (deviceInfo == null) {
+										deviceInfo = new Device();
+									}
+									deviceInfo.setName(detail2.getTextContent());
+									break;
+								case "CivilCode":
+									if (deviceInfo == null) {
+										deviceInfo = new Device();
+									}
+									deviceInfo.setCivilCode(detail2.getTextContent());
+									break;
+								case "ParentID":
+									if (deviceInfo == null) {
+										deviceInfo = new Device();
+									}
+									deviceInfo.setParentID(detail2.getTextContent());
+									break;
+								case "Longitude":
+									if (deviceInfo == null) {
+										deviceInfo = new Device();
+									}
+									// TODO number check
+									deviceInfo.setLongitude(Double.parseDouble(detail2.getTextContent()));
+									break;
+								case "Latitude":
+									if (deviceInfo == null) {
+										deviceInfo = new Device();
+									}
+									// TODO number check
+									deviceInfo.setLatitude(Double.parseDouble(detail2.getTextContent()));
+									break;
+								case "Status":
+									if (deviceInfo == null) {
+										deviceInfo = new Device();
+									}
+									if ("ON".equalsIgnoreCase(detail2.getTextContent())) {
+										deviceInfo.setStatus(DeviceStatus.ON);
+									} else if ("OFF".equalsIgnoreCase(detail2.getTextContent())) {
+										deviceInfo.setStatus(DeviceStatus.OFF);
+									}
+									break;
 								}
+							}
+
+							if (deviceInfo != null) {
+								item.setDeviceInfo(deviceInfo);
+							}
+
+							if (notify != null) {
+								notify.AddToDeviceList(item);
 							}
 						}
 
 					}
+					break;
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return cameras;
+		return notify;
 	}
 }
