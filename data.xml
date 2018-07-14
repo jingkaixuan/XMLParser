@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<Notify>
+	<CmdType>catalog</CmdType>
+	<SN>123</SN>
+	<DeviceID>650102000000200000001</DeviceID>
+	<SumNum>2</SumNum>
+	<DeviceList Num="2">
+		<Item>
+			<DeviceID>650102000013200000001</DeviceID>
+			<Event>ON</Event>
+		</Item>
+		<Item>
+			<DeviceID>650102000013200000002</DeviceID>
+			<Event>ADD</Event>
+			<Name>Camera-1</Name>
+			<CivilCode>100040</CivilCode>
+			<ParentID>650102000000200000001</ParentID>
+			<Longitude>118.55</Longitude>
+			<Latitude>40.33</Latitude>
+			<Status>OFF</Status>
+		</Item>
+	</DeviceList>
+</Notify>
