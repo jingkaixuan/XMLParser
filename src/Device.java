@@ -1,13 +1,17 @@
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
-public class Camera implements Serializable {
+public class Device implements Serializable {
 	private String deviceID = null;
 	private String name = null;
 	private String civilCode = null;
 	private String parentID = null;
 	private double longitude = 0.0;
 	private double latitude = 0.0;
-	private CameraStatus status = null;
+	private DeviceStatus status = null;
+	
+	private List<Device> deviceList = new ArrayList<Device>();
 
 	public String getDeviceID() {
 		return deviceID;
@@ -57,11 +61,11 @@ public class Camera implements Serializable {
 		this.latitude = latitude;
 	}
 
-	public CameraStatus getStatus() {
+	public DeviceStatus getStatus() {
 		return status;
 	}
 
-	public void setStatus(CameraStatus status) {
+	public void setStatus(DeviceStatus status) {
 		this.status = status;
 	}
 

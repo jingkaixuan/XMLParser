@@ -3,6 +3,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -15,10 +17,11 @@ import org.xml.sax.InputSource;
 
 public class Tester {
 	public static void main(String[] args) {
-		Camera ps = Tester.parseFromFile("data.xml");
+		List<Device> cameraList = Tester.parseFromFile("data.xml");
+		System.out.println(cameraList.size());
 	}
 
-	public static Camera parseFromFile(String xmlFile) {
+	public static List<Device> parseFromFile(String xmlFile) {
 		File file = new File(xmlFile);
 		BufferedReader br = null;
 
@@ -52,31 +55,30 @@ public class Tester {
 	}
 
 	/** 解析本地xml(响应) 文件 格式 见定义 */
-	public static Camera domXml(String xmlContent) {
-		Camera camera = new Camera();
+	public static List<Device> domXml(String xmlContent) {
+		List<Device> cameras = new ArrayList<Device>();
 		Element element = null;
-		DocumentBuilder db = null; // documentBuilder为抽象不能直接实例化(将XML文件转换为DOM文件)
+		DocumentBuilder db = null;
 		DocumentBuilderFactory dbf = null;
 		try {
-			dbf = DocumentBuilderFactory.newInstance(); // 返回documentBuilderFactory对象
-			db = dbf.newDocumentBuilder();// 返回db对象用documentBuilderFatory对象获得返回documentBuildr对象
+			dbf = DocumentBuilderFactory.newInstance();
+			db = dbf.newDocumentBuilder();
 
 			StringReader sr = new StringReader(xmlContent);
 			InputSource is = new InputSource(sr);
-			Document dt = db.parse(is); // 得到一个DOM并返回给document对象
+			Document dt = db.parse(is);
 
-			element = dt.getDocumentElement();// 得到一个elment根元素
-			System.out.println("根元素：" + element.getNodeName()); // 获得根节点
+			element = dt.getDocumentElement();
+			System.out.println("根元素：" + element.getNodeName());
 			String rootName = element.getNodeName();
 			if (!rootName.equalsIgnoreCase("Notify")) {
 				return null;
 			}
 
-			NodeList childNodes = element.getChildNodes(); // 获得根元素下的子节点
-			for (int i = 0; i < childNodes.getLength(); i++) // 遍历这些子节点
+			NodeList childNodes = element.getChildNodes();
+			for (int i = 0; i < childNodes.getLength(); i++)
 			{
-				Node node1 = childNodes.item(i); // childNodes.item(i);
-				// 获得每个对应位置i的结点
+				Node node1 = childNodes.item(i);
 				if ("CmdType".equalsIgnoreCase(node1.getNodeName())) {
 					System.out.println("CmdType = " + node1.getTextContent());
 					String content = node1.getTextContent();
@@ -91,16 +93,16 @@ public class Tester {
 					System.out.println("SumNum = " + node1.getTextContent());
 				} else if ("DeviceList".equalsIgnoreCase(node1.getNodeName())) {
 					System.out.println("Device Count = " + node1.getAttributes().getNamedItem("Num").getNodeValue());
-					NodeList nodeDetail = node1.getChildNodes(); // 获得<Accounts>下的节点
+					NodeList nodeDetail = node1.getChildNodes();
 					System.out.println("Item count = " + nodeDetail.getLength());
-					for (int j = 0; j < nodeDetail.getLength(); j++) { // 遍历<Accounts>下的节点
-						Node detail = nodeDetail.item(j); // 获得<Accounts>元素每一个节点
+					for (int j = 0; j < nodeDetail.getLength(); j++) {
+						Node detail = nodeDetail.item(j);
 						System.out.println(detail.getNodeName());
-						if ("Item".equals(detail.getNodeName())) { // 输出PUB
+						if ("Item".equals(detail.getNodeName())) {
 							NodeList nodeDetail2 = detail.getChildNodes();
 							for (int k = 0; k < nodeDetail2.getLength(); k++) {
 								Node detail2 = nodeDetail2.item(k);
-								if ("Event".equals(detail2.getNodeName())) { // 输出pass
+								if ("Event".equals(detail2.getNodeName())) {
 									System.out.println("Event: " + detail2.getTextContent());
 								} else if ("Name".equals(detail2.getNodeName())) {
 									System.out.println("Name: " + detail2.getTextContent());
@@ -126,6 +128,6 @@ public class Tester {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return camera;
+		return cameras;
 	}
 }
