@@ -16,93 +16,12 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 public class Notify {
-	private String cmdType = null;
-	private String serialNum = null;
-	private String deviceID = null;
-	private String sumNum = null;
-	private List<Item> deviceList = new ArrayList<Item>();
-
 	public static final String ROOT_NODE_NAME = "Notify";
 	public static final String DEVICE_NODE_NAME = "Item";
 	public static final String DEVICE_LIST = "DeviceList";
 	public static final String[] notifyFields = new String[] { "CmdType", "SN", "DeviceID", "SumNum", DEVICE_LIST };
 	public static final String[] itemFields = new String[] { "DeviceID", "Event", "Name", "CivilCode", "ParentID",
 			"Longitude", "Latitude", "Status" };
-
-	public String getCmdType() {
-		return cmdType;
-	}
-
-	public void setCmdType(String cmdType) {
-		this.cmdType = cmdType;
-	}
-
-	public String getSerialNum() {
-		return serialNum;
-	}
-
-	public void setSN(String serialNum) {
-		this.serialNum = serialNum;
-	}
-
-	public String getDeviceID() {
-		return deviceID;
-	}
-
-	public void setDeviceID(String deviceID) {
-		this.deviceID = deviceID;
-	}
-
-	public String getSumNum() {
-		return sumNum;
-	}
-
-	public void setSumNum(String sumNum) {
-		this.sumNum = sumNum;
-	}
-
-	public List<Item> getDeviceList() {
-		return deviceList;
-	}
-
-	public void AddToDeviceList(Item item) {
-		if (item != null) {
-			this.deviceList.add(item);
-		}
-	}
-
-	public static Notify parseFromFile(String xmlFile) {
-		File file = new File(xmlFile);
-		BufferedReader br = null;
-
-		try {
-			FileReader fr = new FileReader(file);
-			br = new BufferedReader(fr);
-
-			StringBuilder sb = new StringBuilder();
-			String s = "";
-
-			while ((s = br.readLine()) != null) {
-				sb.append(s + "\n");
-			}
-
-			return Notify.parseFromString(sb.toString());
-
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} finally {
-			try {
-				if (br != null) {
-					br.close();
-				}
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		return null;
-	}
 
 	public static Notify parseFromString(String xmlContent) {
 		Notify notify = null;
@@ -170,19 +89,56 @@ public class Notify {
 				sr.close();
 			}
 		}
+
 		return notify;
+
 	}
 
-	private void appendField(StringBuilder sb, String fieldName, String fieldValue) {
-		sb.append("\t" + fieldName + " : ");
-		sb.append(fieldValue);
-		sb.append("\r\n");
+	public static Notify parseFromFile(String xmlFile) {
+		File file = new File(xmlFile);
+		BufferedReader br = null;
+
+		try {
+			FileReader fr = new FileReader(file);
+			br = new BufferedReader(fr);
+
+			StringBuilder sb = new StringBuilder();
+			String s = "";
+
+			while ((s = br.readLine()) != null) {
+				sb.append(s + "\n");
+			}
+
+			return Notify.parseFromString(sb.toString());
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			try {
+				if (br != null) {
+					br.close();
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return null;
 	}
 
-	private void appendDeviceInfo(StringBuilder sb, String fieldName, String fieldValue) {
-		sb.append("\t\t\t" + fieldName + " : ");
-		sb.append(fieldValue);
-		sb.append("\r\n");
+	private String cmdType = null;
+	private String serialNum = null;
+	private String deviceID = null;
+
+	private String sumNum = null;
+
+	private List<Item> deviceList = new ArrayList<Item>();
+
+	public void AddToDeviceList(Item item) {
+		if (item != null) {
+			this.deviceList.add(item);
+		}
 	}
 
 	private void appendDevice(StringBuilder sb, Item item) {
@@ -197,6 +153,54 @@ public class Notify {
 			this.appendDeviceInfo(sb, "Latitude", String.valueOf(item.getLatitude()));
 			this.appendDeviceInfo(sb, "Status", String.valueOf(item.getStatus()));
 		}
+	}
+
+	private void appendDeviceInfo(StringBuilder sb, String fieldName, String fieldValue) {
+		sb.append("\t\t\t" + fieldName + " : ");
+		sb.append(fieldValue);
+		sb.append("\r\n");
+	}
+
+	private void appendField(StringBuilder sb, String fieldName, String fieldValue) {
+		sb.append("\t" + fieldName + " : ");
+		sb.append(fieldValue);
+		sb.append("\r\n");
+	}
+
+	public String getCmdType() {
+		return cmdType;
+	}
+
+	public String getDeviceID() {
+		return deviceID;
+	}
+
+	public List<Item> getDeviceList() {
+		return deviceList;
+	}
+
+	public String getSerialNum() {
+		return serialNum;
+	}
+
+	public String getSumNum() {
+		return sumNum;
+	}
+
+	public void setCmdType(String cmdType) {
+		this.cmdType = cmdType;
+	}
+
+	public void setDeviceID(String deviceID) {
+		this.deviceID = deviceID;
+	}
+
+	public void setSN(String serialNum) {
+		this.serialNum = serialNum;
+	}
+
+	public void setSumNum(String sumNum) {
+		this.sumNum = sumNum;
 	}
 
 	@Override
