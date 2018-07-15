@@ -150,8 +150,11 @@ public class Notify {
 					if (notify == null) {
 						notify = new Notify();
 					}
-					// TODO check: sumNum is number?
-					notify.setSumNum(Integer.parseInt(node1.getTextContent()));
+					String textContent = node1.getTextContent();
+					if(!Tools.isNumbric(textContent)) {
+						return null;
+					}
+					notify.setSumNum(Integer.parseInt(textContent));
 					break;
 				case "DeviceList":
 					NodeList nodeDetail = node1.getChildNodes();
@@ -181,7 +184,12 @@ public class Notify {
 									if (deviceInfo == null) {
 										deviceInfo = new Device();
 									}
-									deviceInfo.setCivilCode(detail2.getTextContent());
+									
+									textContent = detail2.getTextContent();
+									if(!Tools.isNumbric(textContent)) {
+										return null;
+									}
+									deviceInfo.setCivilCode(textContent);
 									break;
 								case "ParentID":
 									if (deviceInfo == null) {
@@ -193,15 +201,21 @@ public class Notify {
 									if (deviceInfo == null) {
 										deviceInfo = new Device();
 									}
-									// TODO number check
-									deviceInfo.setLongitude(Double.parseDouble(detail2.getTextContent()));
+									textContent = detail2.getTextContent();
+									if(!Tools.isNumbric(textContent)) {
+										return null;
+									}
+									deviceInfo.setLongitude(Double.parseDouble(textContent));
 									break;
 								case "Latitude":
 									if (deviceInfo == null) {
 										deviceInfo = new Device();
 									}
-									// TODO number check
-									deviceInfo.setLatitude(Double.parseDouble(detail2.getTextContent()));
+									textContent = detail2.getTextContent();
+									if(!Tools.isNumbric(textContent)) {
+										return null;
+									}
+									deviceInfo.setLatitude(Double.parseDouble(textContent));
 									break;
 								case "Status":
 									if (deviceInfo == null) {
