@@ -4,6 +4,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -19,8 +20,16 @@ public class Notify {
 	private String cmdType = null;
 	private String serialNum = null;
 	private String deviceID = null;
-	private int sumNum = 0;
+	private String sumNum = null;
 	private List<Item> deviceList = new ArrayList<Item>();
+	
+	public static final String CMD_TYPE = "CmdType";
+	public static final String SN = "SN";
+	public static final String DEVICE_ID = "DeviceID";
+	public static final String SUM_NUM = "SumNum";
+	public static final String DEVICE_LIST = "DeviceList";
+	
+	public static final String[] essentialField = new String[] {CMD_TYPE, SN, DEVICE_ID, SUM_NUM};
 
 	public String getCmdType() {
 		return cmdType;
@@ -34,7 +43,7 @@ public class Notify {
 		return serialNum;
 	}
 
-	public void setSerialNum(String serialNum) {
+	public void setSN(String serialNum) {
 		this.serialNum = serialNum;
 	}
 
@@ -46,11 +55,11 @@ public class Notify {
 		this.deviceID = deviceID;
 	}
 
-	public int getSumNum() {
+	public String getSumNum() {
 		return sumNum;
 	}
 
-	public void setSumNum(int sumNum) {
+	public void setSumNum(String sumNum) {
 		this.sumNum = sumNum;
 	}
 
@@ -102,73 +111,46 @@ public class Notify {
 		Element element = null;
 		DocumentBuilder db = null;
 		DocumentBuilderFactory dbf = null;
+		StringReader sr = null;
 
 		try {
 			dbf = DocumentBuilderFactory.newInstance();
 			db = dbf.newDocumentBuilder();
 
-			StringReader sr = new StringReader(xmlContent);
+			sr = new StringReader(xmlContent);
 			InputSource is = new InputSource(sr);
 			Document dt = db.parse(is);
 
 			element = dt.getDocumentElement();
 			String rootName = element.getNodeName();
 			if (!rootName.equalsIgnoreCase("Notify")) {
-				if (sr != null) {
-					sr.close();
-				}
 				return null;
 			}
-
+			
+			notify = new Notify();
 			NodeList childNodes = element.getChildNodes();
 			for (int i = 0; i < childNodes.getLength(); i++) {
-				Node node1 = childNodes.item(i);
-				switch (node1.getNodeName()) {
-				case "CmdType":
-					String content = node1.getTextContent();
-					if (!content.equalsIgnoreCase("catalog")) {
-						return null;
-					}
-					if (notify == null) {
-						notify = new Notify();
-					}
-					notify.setCmdType(node1.getTextContent());
-					break;
-				case "SN":
-					if (notify == null) {
-						notify = new Notify();
-					}
-					notify.setSerialNum(node1.getTextContent());
-					break;
-				case "DeviceID":
-					if (notify == null) {
-						notify = new Notify();
-					}
-					notify.setDeviceID(node1.getTextContent());
-					break;
-				case "SumNum":
-					if (notify == null) {
-						notify = new Notify();
-					}
-					String textContent = node1.getTextContent();
-					if(!Tools.isNumbric(textContent)) {
-						return null;
-					}
-					notify.setSumNum(Integer.parseInt(textContent));
-					break;
-				case "DeviceList":
-					NodeList nodeDetail = node1.getChildNodes();
-					for (int j = 0; j < nodeDetail.getLength(); j++) {
-						Node detail = nodeDetail.item(j);
+				Node childNode = childNodes.item(i);
+				String nodeName = childNode.getNodeName();
+				if(Arrays.asList(Notify.essentialField).contains(nodeName)) {
+					String methodName = "set" + nodeName;
+					notify.getClass().getMethod(methodName, String.class).invoke(notify, childNode.getTextContent());
+				} else if(nodeName.equalsIgnoreCase(DEVICE_LIST)) {
+					NodeList items = childNode.getChildNodes();
+					for (int j = 0; j < items.getLength(); j++) {
+						Node detail = items.item(j);
 						if ("Item".equals(detail.getNodeName())) {
 							Item item = new Item();
 							Device deviceInfo = null;
+							String textContent = null;
 							NodeList nodeDetail2 = detail.getChildNodes();
 							for (int k = 0; k < nodeDetail2.getLength(); k++) {
 								Node detail2 = nodeDetail2.item(k);
+								
 								switch (detail2.getNodeName()) {
 								case "DeviceID":
-									item.setDeviceID(detail2.getTextContent());
+									item.getClass().getMethod("setDeviceID", String.class).invoke(item, detail2.getTextContent());
+									//item.setDeviceID(detail2.getTextContent());
 									break;
 								case "Event":
 									item.setEvent(detail2.getTextContent());
@@ -240,11 +222,14 @@ public class Notify {
 						}
 
 					}
-					break;
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			if(sr != null) {
+				sr.close();
+			}
 		}
 		return notify;
 	}
