@@ -4,7 +4,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -22,14 +21,13 @@ public class Notify {
 	private String deviceID = null;
 	private String sumNum = null;
 	private List<Item> deviceList = new ArrayList<Item>();
-	
-	public static final String CMD_TYPE = "CmdType";
-	public static final String SN = "SN";
-	public static final String DEVICE_ID = "DeviceID";
-	public static final String SUM_NUM = "SumNum";
+
+	public static final String ROOT_NODE_NAME = "Notify";
+	public static final String DEVICE_NODE_NAME = "Item";
 	public static final String DEVICE_LIST = "DeviceList";
-	
-	public static final String[] essentialField = new String[] {CMD_TYPE, SN, DEVICE_ID, SUM_NUM};
+	public static final String[] notifyFields = new String[] { "CmdType", "SN", "DeviceID", "SumNum", DEVICE_LIST };
+	public static final String[] itemFields = new String[] { "DeviceID", "Event", "Name", "CivilCode", "ParentID",
+			"Longitude", "Latitude", "Status" };
 
 	public String getCmdType() {
 		return cmdType;
@@ -72,7 +70,7 @@ public class Notify {
 			this.deviceList.add(item);
 		}
 	}
-	
+
 	public static Notify parseFromFile(String xmlFile) {
 		File file = new File(xmlFile);
 		BufferedReader br = null;
@@ -123,143 +121,84 @@ public class Notify {
 
 			element = dt.getDocumentElement();
 			String rootName = element.getNodeName();
-			if (!rootName.equalsIgnoreCase("Notify")) {
+			if (!rootName.equalsIgnoreCase(ROOT_NODE_NAME)) {
 				return null;
 			}
-			
+
 			notify = new Notify();
 			NodeList childNodes = element.getChildNodes();
 			for (int i = 0; i < childNodes.getLength(); i++) {
 				Node childNode = childNodes.item(i);
 				String nodeName = childNode.getNodeName();
-				if(Arrays.asList(Notify.essentialField).contains(nodeName)) {
-					String methodName = "set" + nodeName;
-					notify.getClass().getMethod(methodName, String.class).invoke(notify, childNode.getTextContent());
-				} else if(nodeName.equalsIgnoreCase(DEVICE_LIST)) {
-					NodeList items = childNode.getChildNodes();
-					for (int j = 0; j < items.getLength(); j++) {
-						Node detail = items.item(j);
-						if ("Item".equals(detail.getNodeName())) {
-							Item item = new Item();
-							Device deviceInfo = null;
-							String textContent = null;
-							NodeList nodeDetail2 = detail.getChildNodes();
-							for (int k = 0; k < nodeDetail2.getLength(); k++) {
-								Node detail2 = nodeDetail2.item(k);
-								
-								switch (detail2.getNodeName()) {
-								case "DeviceID":
-									item.getClass().getMethod("setDeviceID", String.class).invoke(item, detail2.getTextContent());
-									//item.setDeviceID(detail2.getTextContent());
-									break;
-								case "Event":
-									item.setEvent(detail2.getTextContent());
-									break;
-								case "Name":
-									// TODO design pattern for the similar code below:
-									if (deviceInfo == null) {
-										deviceInfo = new Device();
+				for (String fieldName : Notify.notifyFields) {
+					if (fieldName.equalsIgnoreCase(nodeName)) {
+						if (!nodeName.equalsIgnoreCase(DEVICE_LIST)) {
+							String methodName = "set" + fieldName;
+							notify.getClass().getMethod(methodName, String.class).invoke(notify,
+									childNode.getTextContent());
+						} else {
+							NodeList itemNodes = childNode.getChildNodes();
+							for (int j = 0; j < itemNodes.getLength(); j++) {
+								Node detail = itemNodes.item(j);
+								if (DEVICE_NODE_NAME.equals(detail.getNodeName())) {
+									Item item = new Item();
+									NodeList nodeDetail2 = detail.getChildNodes();
+									for (int k = 0; k < nodeDetail2.getLength(); k++) {
+										Node detail2 = nodeDetail2.item(k);
+										String nodeName2 = detail2.getNodeName();
+										for (String field : Notify.itemFields) {
+											if (field.equalsIgnoreCase(nodeName2)) {
+												String methodName = "set" + field;
+												item.getClass().getMethod(methodName, String.class).invoke(item,
+														detail2.getTextContent());
+												break;
+											}
+										}
 									}
-									deviceInfo.setName(detail2.getTextContent());
-									break;
-								case "CivilCode":
-									if (deviceInfo == null) {
-										deviceInfo = new Device();
-									}
-									
-									textContent = detail2.getTextContent();
-									if(!Tools.isNumbric(textContent)) {
-										return null;
-									}
-									deviceInfo.setCivilCode(textContent);
-									break;
-								case "ParentID":
-									if (deviceInfo == null) {
-										deviceInfo = new Device();
-									}
-									deviceInfo.setParentID(detail2.getTextContent());
-									break;
-								case "Longitude":
-									if (deviceInfo == null) {
-										deviceInfo = new Device();
-									}
-									textContent = detail2.getTextContent();
-									if(!Tools.isNumbric(textContent)) {
-										return null;
-									}
-									deviceInfo.setLongitude(Double.parseDouble(textContent));
-									break;
-								case "Latitude":
-									if (deviceInfo == null) {
-										deviceInfo = new Device();
-									}
-									textContent = detail2.getTextContent();
-									if(!Tools.isNumbric(textContent)) {
-										return null;
-									}
-									deviceInfo.setLatitude(Double.parseDouble(textContent));
-									break;
-								case "Status":
-									if (deviceInfo == null) {
-										deviceInfo = new Device();
-									}
-									if ("ON".equalsIgnoreCase(detail2.getTextContent())) {
-										deviceInfo.setStatus(DeviceStatus.ON);
-									} else if ("OFF".equalsIgnoreCase(detail2.getTextContent())) {
-										deviceInfo.setStatus(DeviceStatus.OFF);
-									}
-									break;
+									notify.AddToDeviceList(item);
 								}
 							}
-
-							if (deviceInfo != null) {
-								item.setDeviceInfo(deviceInfo);
-							}
-
-							if (notify != null) {
-								notify.AddToDeviceList(item);
-							}
 						}
-
+						break;
 					}
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			if(sr != null) {
+			if (sr != null) {
 				sr.close();
 			}
 		}
 		return notify;
 	}
-	
+
 	private void appendField(StringBuilder sb, String fieldName, String fieldValue) {
-		sb.append("\t" + fieldName +" : ");
+		sb.append("\t" + fieldName + " : ");
 		sb.append(fieldValue);
 		sb.append("\r\n");
 	}
-	
+
 	private void appendDeviceInfo(StringBuilder sb, String fieldName, String fieldValue) {
-		sb.append("\t\t\t" + fieldName +" : ");
+		sb.append("\t\t\t" + fieldName + " : ");
 		sb.append(fieldValue);
 		sb.append("\r\n");
 	}
-	
+
 	private void appendDevice(StringBuilder sb, Item item) {
 		this.appendDeviceInfo(sb, "DeviceID", item.getDeviceID());
 		this.appendDeviceInfo(sb, "Event", item.getEvent());
-		
-		if(item.getEvent().equalsIgnoreCase("ADD") || item.getEvent().equalsIgnoreCase("UPDATE")) {
-			this.appendDeviceInfo(sb, "Name", item.getDeviceInfo().getName());
-			this.appendDeviceInfo(sb, "CivilCode", item.getDeviceInfo().getCivilCode());
-			this.appendDeviceInfo(sb, "ParentID", item.getDeviceInfo().getParentID());
-			this.appendDeviceInfo(sb, "Longitude", String.valueOf(item.getDeviceInfo().getLongitude()));
-			this.appendDeviceInfo(sb, "Latitude", String.valueOf(item.getDeviceInfo().getLatitude()));
-			this.appendDeviceInfo(sb, "Status", String.valueOf(item.getDeviceInfo().getStatus()));
+
+		if (item.getEvent().equalsIgnoreCase("ADD") || item.getEvent().equalsIgnoreCase("UPDATE")) {
+			this.appendDeviceInfo(sb, "Name", item.getName());
+			this.appendDeviceInfo(sb, "CivilCode", item.getCivilCode());
+			this.appendDeviceInfo(sb, "ParentID", item.getParentID());
+			this.appendDeviceInfo(sb, "Longitude", String.valueOf(item.getLongitude()));
+			this.appendDeviceInfo(sb, "Latitude", String.valueOf(item.getLatitude()));
+			this.appendDeviceInfo(sb, "Status", String.valueOf(item.getStatus()));
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -268,19 +207,18 @@ public class Notify {
 		this.appendField(sb, "SN", this.serialNum);
 		this.appendField(sb, "DeviceID", this.deviceID);
 		this.appendField(sb, "SumNum", String.valueOf(this.sumNum));
-		
+
 		sb.append("\tDeviceList : {\r\n");
-		for(int i = 0; i < this.getDeviceList().size(); ++i) {
+		for (int i = 0; i < this.getDeviceList().size(); ++i) {
 			sb.append("\t\tItem[" + i + "] : {\r\n");
 			this.appendDevice(sb, this.getDeviceList().get(i));
 			sb.append("\t\t}\r\n");
 		}
 		sb.append("\t}\r\n");
-		
-		
+
 		sb.append("}");
-		
+
 		return sb.toString();
-		
+
 	}
 }
