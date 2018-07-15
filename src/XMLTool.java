@@ -3,8 +3,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -15,9 +13,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-public class Tester {
+public class XMLTool {
 	public static void main(String[] args) {
-		Notify notify = Tester.parseFromFile("data.xml");
+		Notify notify = XMLTool.parseFromFile("data.xml");
 		if (notify == null) {
 			return;
 		}
@@ -39,7 +37,7 @@ public class Tester {
 				sb.append(s + "\n");
 			}
 
-			return Tester.domXml(sb.toString());
+			return XMLTool.parseFromString(sb.toString());
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -57,7 +55,7 @@ public class Tester {
 		return null;
 	}
 
-	public static Notify domXml(String xmlContent) {
+	public static Notify parseFromString(String xmlContent) {
 		Notify notify = null;
 		Element element = null;
 		DocumentBuilder db = null;
